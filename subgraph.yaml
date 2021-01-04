@@ -1,0 +1,38 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: OpenSea
+    network: mainnet
+    source:
+      address: "0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"
+      abi: OpenSea
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.2
+      language: wasm/assemblyscript
+      entities:
+        - OrderApprovedPartOne
+        - OrderApprovedPartTwo
+        - OrderCancelled
+        - OrdersMatched
+        - OwnershipRenounced
+        - OwnershipTransferred
+      abis:
+        - name: OpenSea
+          file: ./abis/OpenSea.json
+      eventHandlers:
+        - event: OrderApprovedPartOne(indexed bytes32,address,indexed address,address,uint256,uint256,uint256,uint256,indexed address,uint8,uint8,uint8,address)
+          handler: handleOrderApprovedPartOne
+        - event: OrderApprovedPartTwo(indexed bytes32,uint8,bytes,bytes,address,bytes,address,uint256,uint256,uint256,uint256,uint256,bool)
+          handler: handleOrderApprovedPartTwo
+        - event: OrderCancelled(indexed bytes32)
+          handler: handleOrderCancelled
+        - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
+          handler: handleOrdersMatched
+        - event: OwnershipRenounced(indexed address)
+          handler: handleOwnershipRenounced
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: ./src/mapping.ts
