@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, BigDecimal } from "@graphprotocol/graph-ts"
 import {
   OpenSea,
   OrderApprovedPartOne,
@@ -8,81 +8,191 @@ import {
   OwnershipRenounced,
   OwnershipTransferred
 } from "../generated/OpenSea/OpenSea"
-import { ExampleEntity } from "../generated/schema"
+import {
+  Account,
+  Contract,
+  Transaction,
+  MarketPlace,
+  FeeEvent,
+  NFT,
+  SaleEvent,
+  TransferEvent,
+  Auction
+  } from "../generated/schema"
 
 export function handleOrderApprovedPartOne(event: OrderApprovedPartOne): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+  let opensea = OpenSea.bind(event.address)
+  let contract = new Contract(opensea._address.toHexString())
+  let transaction = Transaction.load(event.transaction.hash.toHexString())
+  let account = Account.load(event.params.maker.toHexString())
+  let marketplace = MarketPlace.load(event.params.exchange.toHexString())
+  let feeEvent = FeeEvent.load(event.transaction.hash.toHexString())
+  let saleEvent = SaleEvent.load(event.transaction.hash.toHexString())
+  
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+  if (transaction == null){
+    transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+  if (account == null){
+    account = new Account(event.params.maker.toHexString())
+  }
+  if (marketplace == null){
+    marketplace = new MarketPlace(event.params.exchange.toHexString())
+  }
+  if (feeEvent == null){
+    feeEvent = new FeeEvent(event.transaction.hash.toHexString())
+  }
+  if (saleEvent == null){
+    saleEvent = new SaleEvent(event.transaction.hash.toHexString())
   }
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
+  marketplace.exchangeAddress = event.params.exchange
 
-  // Entity fields can be set based on event parameters
-  entity.hash = event.params.hash
-  entity.exchange = event.params.exchange
+  saleEvent.marketplace = marketplace.id
+  saleEvent.transaction = transaction.id
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+  //feeEvent.feeMethod = event.params.feeMethod(BigInt.fromI32(0))
+  feeEvent.feeRecipient = event.params.feeRecipient
+  feeEvent.takerProtocolFee = event.params.takerProtocolFee
+  feeEvent.makerProtocolFee = event.params.makerProtocolFee
+  feeEvent.makerRelayerFee = event.params.makerRelayerFee
+  feeEvent.takerProtocolFee = event.params.takerRelayerFee
+  feeEvent.transaction = transaction.id
+  feeEvent.account = account.id
+  feeEvent.contract = contract.id
 
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
 
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.name(...)
-  // - contract.tokenTransferProxy(...)
-  // - contract.staticCall(...)
-  // - contract.guardedArrayReplace(...)
-  // - contract.minimumTakerProtocolFee(...)
-  // - contract.codename(...)
-  // - contract.testCopyAddress(...)
-  // - contract.testCopy(...)
-  // - contract.calculateCurrentPrice_(...)
-  // - contract.version(...)
-  // - contract.orderCalldataCanMatch(...)
-  // - contract.validateOrder_(...)
-  // - contract.calculateFinalPrice(...)
-  // - contract.protocolFeeRecipient(...)
-  // - contract.hashOrder_(...)
-  // - contract.ordersCanMatch_(...)
-  // - contract.registry(...)
-  // - contract.minimumMakerProtocolFee(...)
-  // - contract.hashToSign_(...)
-  // - contract.cancelledOrFinalized(...)
-  // - contract.owner(...)
-  // - contract.exchangeToken(...)
-  // - contract.validateOrderParameters_(...)
-  // - contract.INVERSE_BASIS_POINT(...)
-  // - contract.calculateMatchPrice_(...)
-  // - contract.approvedOrders(...)
+  transaction.hash = event.transaction.hash
+  transaction.block = event.block.number
+  transaction.date = event.block.timestamp
+  transaction.account = account.id
+  transaction.marketplace = marketplace.id
+  transaction.saleEvent = saleEvent.id
+  transaction.feeEvent = feeEvent.id
+
+
+  contract.address = opensea._address
+  contract.name = opensea._name
+  contract.version = opensea.version()
+  contract.codename = opensea.codename()
+
+
+  contract.save()
+  marketplace.save()
+  account.save()
+  feeEvent.save()
+  transaction.save()
 }
 
-export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {}
+export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {
+  let auction = Auction.load(event.params.hash.toHexString())
+  let transaction = Transaction.load(event.transaction.hash.toHexString())
+
+  if (transaction == null){
+    transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+  if (auction == null){
+    auction = new Auction(event.params.hash.toHexString())
+  }
+
+
+  auction.listingTime = event.params.listingTime
+  auction.basePrice = event.params.basePrice
+  auction.expirationTime = event.params.expirationTime
+  auction.paymentToken = event.params.paymentToken
+  auction.staticExtraData = event.params.staticExtradata
+  auction.extra = event.params.extra
+  auction.hash = event.params.hash
+  auction.orderbook = event.params.orderbookInclusionDesired
+  auction.transaction = transaction.id
+
+
+  transaction.hash = event.transaction.hash
+  transaction.block = event.block.number
+  transaction.date = event.block.timestamp
+
+
+  auction.save()
+  transaction.save()
+
+
+
+}
 
 export function handleOrderCancelled(event: OrderCancelled): void {}
 
-export function handleOrdersMatched(event: OrdersMatched): void {}
+export function handleOrdersMatched(event: OrdersMatched): void {
+  let saleEvent = SaleEvent.load(event.transaction.hash.toHexString())
+  let nft = NFT.load(event.params.metadata.toHexString())
+  let transaction = Transaction.load(event.transaction.hash.toHexString())
+  let account = Account.load(event.params.taker.toHexString())
+
+  if (transaction == null){
+    transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+  if (nft == null){
+    nft = new  NFT(event.params.metadata.toHexString())
+  }
+  if (saleEvent == null){
+    saleEvent = new SaleEvent(event.transaction.hash.toHexString())
+  }
+  if (account == null){
+    account = new Account(event.params.taker.toHexString())
+  }
+  
+  
+  saleEvent.sellHash = event.params.sellHash
+  saleEvent.buyHash = event.params.buyHash
+  saleEvent.maker = event.params.maker
+  saleEvent.taker = event.params.taker
+  saleEvent.account = account.id
+  saleEvent.price = event.params.price
+  saleEvent.nft = nft.id
+  saleEvent.transaction = transaction.id
+
+
+  transaction.hash = event.transaction.hash
+  transaction.block = event.block.number
+  transaction.date = event.block.timestamp
+  transaction.nft = nft.id
+  transaction.saleEvent = saleEvent.id
+
+
+
+  saleEvent.save()
+  transaction.save()
+  account.save()
+  nft.save()
+
+}
 
 export function handleOwnershipRenounced(event: OwnershipRenounced): void {}
 
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
+export function handleOwnershipTransferred(event: OwnershipTransferred): void {
+  let transferevent = TransferEvent.load(event.params.previousOwner.toHexString())
+  let account = Account.load(event.params.newOwner.toHexString())
+  let transaction = Transaction.load(event.transaction.hash.toHexString())
+
+  if (transferevent == null){
+    transferevent = new TransferEvent(event.params.previousOwner.toHexString())
+  }
+  if (account == null){
+    account = new  Account(event.params.newOwner.toHexString())
+  }
+  if (transaction == null){
+    transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+
+  transferevent.sender = event.params.previousOwner
+  transferevent.receiver = event.params.newOwner
+  transferevent.account = account.id
+  transferevent.transaction = transaction.id
+
+  transferevent.save()
+  transaction.save()
+  account.save()
+
+
+
+
+}
