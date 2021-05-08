@@ -14,12 +14,10 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - OrderApprovedPartOne
-        - OrderApprovedPartTwo
-        - OrderCancelled
-        - OrdersMatched
-        - OwnershipRenounced
-        - OwnershipTransferred
+        - Account
+        - Contract
+        - Transaction
+        - MarketPlace
       abis:
         - name: OpenSea
           file: ./abis/OpenSea.json
