@@ -1,2 +1,2 @@
 # OpenSea
-Subgraph for Defi Money Market Protocol 
+Subgraph for the OpenSea Marketplace
