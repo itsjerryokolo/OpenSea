@@ -14,15 +14,13 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - OrderApprovedPartOne
-        - OrderApprovedPartTwo
-        - OrderCancelled
-        - OrdersMatched
-        - OwnershipRenounced
-        - OwnershipTransferred
+        - Account
+        - Contract
+        - Transaction
+        - MarketPlace
       abis:
         - name: OpenSea
-          file: OpenSea\abis\OpenSea.json
+          file: OpenSea/abis/OpenSea.json
       eventHandlers:
         - event: OrderApprovedPartOne(indexed bytes32,address,indexed
             address,address,uint256,uint256,uint256,uint256,indexed
@@ -40,4 +38,4 @@ dataSources:
           handler: handleOwnershipRenounced
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-      file: OpenSea\OpenSea.wasm
+      file: OpenSea/OpenSea.wasm
