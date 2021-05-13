@@ -145,7 +145,7 @@ export function handleOrdersMatched(event: OrdersMatched): void {
     transaction = new Transaction(event.transaction.hash.toHexString())
   }
   if (collection == null){
-    collection = new Collection.load(event.params.metadata)
+    collection = new Collection(event.params.metadata.toHexString())
   }
   if (nft == null){
     nft = new  NFT(event.params.metadata.toHexString())
