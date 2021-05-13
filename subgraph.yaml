@@ -35,3 +35,22 @@ dataSources:
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
       file: ./src/mapping.ts
+templates:
+  - name: Collection
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: newCollection
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - newCollection
+      abis:
+        - name: newCollection
+          file: ./abis/OpenSea.json
+      eventHandlers:
+        - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
+          handler: handleOrdersMatched

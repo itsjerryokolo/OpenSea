@@ -1,4 +1,4 @@
-import { BigInt, BigDecimal } from "@graphprotocol/graph-ts"
+import { BigInt, BigDecimal} from "@graphprotocol/graph-ts"
 import {
   OpenSea,
   OrderApprovedPartOne,
@@ -8,6 +8,12 @@ import {
   OwnershipRenounced,
   OwnershipTransferred
 } from "../generated/OpenSea/OpenSea"
+
+import {
+  Collection
+} from "../generated/templates/Collection/Collection"
+
+
 import {
   Account,
   Contract,
@@ -84,6 +90,8 @@ export function handleOrderApprovedPartOne(event: OrderApprovedPartOne): void {
   transaction.save()
 }
 
+
+
 export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {
   let auction = Auction.load(event.params.hash.toHexString())
   let transaction = Transaction.load(event.transaction.hash.toHexString())
@@ -121,14 +129,23 @@ export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {
 
 export function handleOrderCancelled(event: OrderCancelled): void {}
 
+
+
+
 export function handleOrdersMatched(event: OrdersMatched): void {
   let saleEvent = SaleEvent.load(event.transaction.hash.toHexString())
   let nft = NFT.load(event.params.metadata.toHexString())
   let transaction = Transaction.load(event.transaction.hash.toHexString())
   let account = Account.load(event.params.taker.toHexString())
+  let collection = Collection.load(event.params.metadata)
+
+
 
   if (transaction == null){
     transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+  if (collection == null){
+    collection = new Collection.load(event.params.metadata)
   }
   if (nft == null){
     nft = new  NFT(event.params.metadata.toHexString())
@@ -141,6 +158,7 @@ export function handleOrdersMatched(event: OrdersMatched): void {
   }
   
   
+
   saleEvent.sellHash = event.params.sellHash
   saleEvent.buyHash = event.params.buyHash
   saleEvent.maker = event.params.maker
@@ -162,7 +180,10 @@ export function handleOrdersMatched(event: OrdersMatched): void {
   saleEvent.save()
   transaction.save()
   account.save()
+  collection.save()
   nft.save()
+
+  Collection.create(event.params.metadata)
 
 }
 
@@ -196,3 +217,5 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {
 
 
 }
+
+
