@@ -1,4 +1,4 @@
-specVersion: 0.0.2
+specVersion: 0.0.5
 schema:
   file: ./schema.graphql
 dataSources:
@@ -11,7 +11,7 @@ dataSources:
       startBlock: 5774644
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Account
@@ -22,35 +22,11 @@ dataSources:
         - name: OpenSea
           file: ./abis/OpenSea.json
       eventHandlers:
+        - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
+          handler: handleOrdersMatched
+          receipt: true
         - event: OrderApprovedPartOne(indexed bytes32,address,indexed address,address,uint256,uint256,uint256,uint256,indexed address,uint8,uint8,uint8,address)
           handler: handleOrderApprovedPartOne
         - event: OrderApprovedPartTwo(indexed bytes32,uint8,bytes,bytes,address,bytes,address,uint256,uint256,uint256,uint256,uint256,bool)
           handler: handleOrderApprovedPartTwo
-        - event: OrderCancelled(indexed bytes32)
-          handler: handleOrderCancelled
-        - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
-          handler: handleOrdersMatched
-        - event: OwnershipRenounced(indexed address)
-          handler: handleOwnershipRenounced
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
       file: ./src/mapping.ts
-templates:
-  - name: Collection
-    kind: ethereum/contract
-    network: mainnet
-    source:
-      abi: newCollection
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      file: ./src/mapping.ts
-      entities:
-        - newCollection
-      abis:
-        - name: newCollection
-          file: ./abis/OpenSea.json
-      eventHandlers:
-        - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
-          handler: handleOrdersMatched

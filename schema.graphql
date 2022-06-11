@@ -1,99 +1,152 @@
+interface Event {
+  id: ID!
+  collection: Collection
+  nft: Nft
+  eventType: EventType!
+  txHash: Bytes
+  blockHash: Bytes
+  timestamp: BigInt
+  logIndex: BigInt
+  blockNumber: BigInt
+}
+
+enum EventType {
+  TRANSFER
+  SALE
+  FEE
+  AUCTION
+}
+
+# enum NetworkType{
+#   MAINNET
+#   POLYGON
+# }
+
 type Account @entity {
   id: ID!
-  saleEvents: [SaleEvent!]! @derivedFrom (field:"account")
-  transferEvents: [TransferEvent!]! @derivedFrom (field:"account")
-  feeRecipients: [FeeEvent!]! @derivedFrom (field:"account")
-  transaction: [Transaction!]! @derivedFrom (field: "account")
+  ownedCollection: [Collection!]! @derivedFrom(field: "owner")
+  nftOwned: [Nft!]! @derivedFrom(field: "owner")
+  sales: [Sale!]! @derivedFrom(field: "account")
+  sends: [Transfer!]! @derivedFrom(field: "account")
+  feeRecipients: [Fee!]! @derivedFrom(field: "account")
+  numberOfTransfers: BigInt!
+  numberOfSales: BigInt!
+  numberOfPurchases: BigInt
 }
 
-type MarketPlace @entity{
+type Collection @entity {
   id: ID!
-  exchangeAddress: Bytes 
-  saleEvents: [SaleEvent!]! @derivedFrom (field:"marketplace")
-  transferEvents: [TransferEvent!]! @derivedFrom (field:"marketplace")
-  feeRecipients: [FeeEvent!]! @derivedFrom (field:"marketplace")
-  transaction: [Transaction!]! @derivedFrom (field: "marketplace")
-}
+  nft: Nft!
 
-type Contract @entity{
-  id: ID!
-  address: Bytes
-  name: String
+  totalSupply: BigInt
+  contractURI: String
   version: String
   codename: String
+  numberOfTransfers: BigInt!
+  numberOfSales: BigInt!
+  totalSales: BigInt
+  tokenId: BigInt!
 
+  owner: Account!
+
+  event: [Event!]! @derivedFrom(field: "collection")
+  sale: [Sale!]! @derivedFrom(field: "collection")
 }
 
+type Nft @entity {
+  id: ID! #Collection + Token ID
+  collection: Collection!
+  symbol: String
+  sale: Sale
 
-type NFT @entity{
-id: ID!
-transaction: Transaction
+  numberOfTransfers: BigInt!
+  numberOfSales: BigInt!
+  totalSales: BigInt
+  totalTransfers: BigInt
+
+  tokenID: BigInt
+  owner: Account!
+
+  "All events"
+  events: [Event!]! @derivedFrom(field: "nft")
 }
 
-type SaleEvent @entity{
+type Sale implements Event @entity {
   id: ID!
   sellHash: Bytes
   buyHash: Bytes
-  maker: Bytes
-  taker: Bytes
+  buyer: Bytes
+  seller: Bytes
   price: BigInt
+  paymentToken: Token
   account: Account
-  marketplace: MarketPlace
-  nft: NFT
-  transaction: Transaction
+  collection: Collection!
+  eventType: EventType!
+  logNumber: BigInt!
+  txHash: Bytes
+  blockHash: Bytes
+  timestamp: BigInt
+  logIndex: BigInt
+  blockNumber: BigInt
 }
 
-
-type FeeEvent @entity{
+type Fee implements Event @entity {
   id: ID!
   takerRelayerFee: BigInt
   makerRelayerFee: BigInt
   takerProtocolFee: BigInt
   makerProtocolFee: BigInt
-  feeRecipient: Bytes
-  marketplace: MarketPlace
+  feeRecipient: Collection #Check if this is to a collection
   account: Account
-  contract: Contract
-  transaction: Transaction
+  eventType: EventType!
+  txHash: Bytes
+  blockHash: Bytes
+  timestamp: BigInt
+  logIndex: BigInt
+  blockNumber: BigInt
 }
 
-
-type TransferEvent @entity{
+type Transfer implements Event @entity {
   id: ID!
   sender: Bytes!
   receiver: Bytes!
   account: Account
-  marketplace: MarketPlace
-  transaction: Transaction
-
+  nft: Nft!
+  collection: Collection
+  eventType: EventType!
+  txHash: Bytes
+  blockHash: Bytes
+  timestamp: BigInt
+  logIndex: BigInt
+  blockNumber: BigInt
 }
 
-
-type Auction @entity{
+type Auction implements Event @entity {
   id: ID!
   listingTime: BigInt
   expirationTime: BigInt
   basePrice: BigInt
-  paymentToken: Bytes
+  paymentToken: Token
   staticTarget: Bytes
   staticExtraData: Bytes
   extra: BigInt
   hash: Bytes
   orderbook: Boolean!
-  transaction: Transaction
-
+  eventType: EventType!
+  txHash: Bytes
+  blockHash: Bytes
+  timestamp: BigInt
+  logNumber: BigInt
+  logIndex: BigInt
+  blockNumber: BigInt
 }
 
-
-type Transaction @entity {
-  id: ID!
-  hash: Bytes
-  date: BigInt
-  block: BigInt
-  account: Account
-  marketplace: MarketPlace
-  saleEvent: SaleEvent
-  feeEvent: FeeEvent
-  auction: Auction
-  nft: NFT
+type Token @entity {
+  id: ID! #Payment token e.g USDC, ETH, DAI
+  symbol: String
+  name: String
+  address: Bytes!
+  decimals: BigInt
+  numberOfSales: BigInt
+  sales: [Sale!]! @derivedFrom(field: "paymentToken")
 }
