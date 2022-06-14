@@ -3,15 +3,14 @@ interface Event {
   collection: Collection
   nft: Nft
   eventType: EventType!
-  txHash: Bytes
-  blockHash: Bytes
-  timestamp: BigInt
-  logIndex: BigInt
-  blockNumber: BigInt
+  txHash: Bytes!
+  blockHash: Bytes!
+  timestamp: BigInt!
+  logNumber: BigInt!
+  blockNumber: BigInt!
 }
 
 enum EventType {
-  TRANSFER
   SALE
   FEE
   AUCTION
@@ -24,45 +23,41 @@ enum EventType {
 
 type Account @entity {
   id: ID!
-  ownedCollection: [Collection!]! @derivedFrom(field: "owner")
-  nftOwned: [Nft!]! @derivedFrom(field: "owner")
-  sales: [Sale!]! @derivedFrom(field: "account")
-  sends: [Transfer!]! @derivedFrom(field: "account")
-  feeRecipients: [Fee!]! @derivedFrom(field: "account")
-  numberOfTransfers: BigInt!
   numberOfSales: BigInt!
-  numberOfPurchases: BigInt
+  numberOfPurchases: BigInt!
+  totalSpent: BigInt!
+  totalEarned: BigInt!
+  #nftOwnedAndCollection: [String!]!
+  sales: [Sale!]! @derivedFrom(field: "buyer")
 }
 
 type Collection @entity {
   id: ID!
-  nft: Nft!
+  nft: Nft
 
   totalSupply: BigInt
   contractURI: String
   version: String
   codename: String
-  numberOfTransfers: BigInt!
   numberOfSales: BigInt!
-  totalSales: BigInt
+  totalSales: BigInt!
   tokenId: BigInt!
 
   owner: Account!
 
   event: [Event!]! @derivedFrom(field: "collection")
-  sale: [Sale!]! @derivedFrom(field: "collection")
+  sales: [Sale!]! @derivedFrom(field: "collection")
+  feesReceived: [Fee!]! @derivedFrom(field: "feeRecipient")
 }
 
 type Nft @entity {
   id: ID! #Collection + Token ID
-  collection: Collection!
+  collection: Collection
   symbol: String
   sale: Sale
 
-  numberOfTransfers: BigInt!
   numberOfSales: BigInt!
   totalSales: BigInt
-  totalTransfers: BigInt
 
   tokenID: BigInt
   owner: Account!
@@ -73,21 +68,22 @@ type Nft @entity {
 
 type Sale implements Event @entity {
   id: ID!
-  sellHash: Bytes
-  buyHash: Bytes
-  buyer: Bytes
-  seller: Bytes
-  price: BigInt
-  paymentToken: Token
-  account: Account
-  collection: Collection!
+  sellHash: Bytes!
+  buyHash: Bytes!
+  buyer: Account!
+  seller: Account!
+  price: BigInt!
+  paymentToken: PaymentToken
+  collection: Collection
+
+  nft: Nft
+
   eventType: EventType!
   logNumber: BigInt!
-  txHash: Bytes
-  blockHash: Bytes
-  timestamp: BigInt
-  logIndex: BigInt
-  blockNumber: BigInt
+  txHash: Bytes!
+  blockHash: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
 }
 
 type Fee implements Event @entity {
@@ -96,29 +92,15 @@ type Fee implements Event @entity {
   makerRelayerFee: BigInt
   takerProtocolFee: BigInt
   makerProtocolFee: BigInt
-  feeRecipient: Collection #Check if this is to a collection
-  account: Account
+  feeRecipient: Collection!
+  collection: Collection #Check if this is to a collection
+  nft: Nft
   eventType: EventType!
-  txHash: Bytes
-  blockHash: Bytes
-  timestamp: BigInt
-  logIndex: BigInt
-  blockNumber: BigInt
-}
-
-type Transfer implements Event @entity {
-  id: ID!
-  sender: Bytes!
-  receiver: Bytes!
-  account: Account
-  nft: Nft!
-  collection: Collection
-  eventType: EventType!
-  txHash: Bytes
-  blockHash: Bytes
-  timestamp: BigInt
-  logIndex: BigInt
-  blockNumber: BigInt
+  txHash: Bytes!
+  blockHash: Bytes!
+  timestamp: BigInt!
+  logNumber: BigInt!
+  blockNumber: BigInt!
 }
 
 type Auction implements Event @entity {
@@ -126,27 +108,28 @@ type Auction implements Event @entity {
   listingTime: BigInt
   expirationTime: BigInt
   basePrice: BigInt
-  paymentToken: Token
+  paymentToken: PaymentToken
   staticTarget: Bytes
   staticExtraData: Bytes
+  collection: Collection
+  nft: Nft
   extra: BigInt
   hash: Bytes
   orderbook: Boolean!
   eventType: EventType!
-  txHash: Bytes
-  blockHash: Bytes
-  timestamp: BigInt
-  logNumber: BigInt
-  logIndex: BigInt
-  blockNumber: BigInt
+  txHash: Bytes!
+  blockHash: Bytes!
+  timestamp: BigInt!
+  logNumber: BigInt!
+  blockNumber: BigInt!
 }
 
-type Token @entity {
+type PaymentToken @entity {
   id: ID! #Payment token e.g USDC, ETH, DAI
   symbol: String
   name: String
-  address: Bytes!
+  address: String!
   decimals: BigInt
-  numberOfSales: BigInt
+  numberOfSales: BigInt!
   sales: [Sale!]! @derivedFrom(field: "paymentToken")
 }

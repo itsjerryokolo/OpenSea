@@ -2,12 +2,12 @@ import { Address, ethereum } from '@graphprotocol/graph-ts'
 import { Auction } from '../../generated/schema'
 
 export function getOrCreateAuction(
-	hash: Address,
+	hash: string,
 	event: ethereum.Event
 ): Auction {
-	let auction = Auction.load(hash.toHexString())
+	let auction = Auction.load(hash)
 	if (!auction) {
-		auction = new Auction(hash.toHexString())
+		auction = new Auction(hash)
 		auction.timestamp = event.block.timestamp
 		auction.txHash = event.transaction.hash
 		auction.blockHash = event.block.hash

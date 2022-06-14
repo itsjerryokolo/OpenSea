@@ -1,4 +1,5 @@
-import { ethereum, TypedMap } from '@graphprotocol/graph-ts'
+import { ethereum, TypedMap, Address } from '@graphprotocol/graph-ts'
+import { Collection } from '../generated/schema'
 
 export function getGlobalId(event: ethereum.Event): string {
 	let globalId = event.transaction.hash

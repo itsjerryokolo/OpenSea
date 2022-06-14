@@ -1,12 +1,11 @@
-import { Address, ethereum } from '@graphprotocol/graph-ts'
-import { Sale, Token } from '../../generated/schema'
-import { getGlobalId, PaymentTokens } from '../utils'
+import { ethereum } from '@graphprotocol/graph-ts'
+import { Sale } from '../../generated/schema'
+import { getGlobalId } from '../utils'
 
-export function getOrCreateSale(token: Token, event: ethereum.Event): Sale {
+export function getOrCreateSale(event: ethereum.Event): Sale {
 	let sale = Sale.load(getGlobalId(event))
 	if (!sale) {
 		sale = new Sale(getGlobalId(event))
-		sale.paymentToken = token.id
 		sale.timestamp = event.block.timestamp
 		sale.txHash = event.transaction.hash
 		sale.blockHash = event.block.hash

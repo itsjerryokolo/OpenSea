@@ -1,13 +1,17 @@
-import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
+import { Address, TypedMap, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OpenSea } from '../../generated/OpenSea/OpenSea'
-import { Collection } from '../../generated/schema'
+import { Account, Collection } from '../../generated/schema'
 import { BI_ONE, BI_ZERO } from '../../src/constant'
-export function getOrCreateCollection(id: Address): Collection {
-	let collection = Collection.load(id.toHexString())
+
+// let MatchTokenToCollection = new TypedMap<string, string[]>()
+
+export function getOrCreateCollection(id: string): Collection {
+	let collection = Collection.load(id)
+
 	if (!collection) {
-		collection = new Collection(id.toHexString())
+		collection = new Collection(id)
 		collection.totalSupply = BI_ZERO
-		collection.totalVolume = BI_ZERO
+		collection.totalSales = BI_ZERO
 
 		/**
 		 * @Todo
@@ -17,8 +21,37 @@ export function getOrCreateCollection(id: Address): Collection {
 		 */
 	}
 
-	collection.tokenId = ''
-	collection.account = ''
-
 	return collection
 }
+// export function createTypedMapCollection(
+// 	collection: string,
+// 	tokenId: BigInt,
+// 	account: string
+// ): void {
+// 	MatchTokenToCollection.set(account, [collection, tokenId.toString()])
+// }
+
+// export function getTypedMapCollection(account: string): string[] {
+// 	let x = MatchTokenToCollection.get(account)
+// 	return x as string[]
+// }
+// // export function removeAccountSaleFromCollection(
+// 	collection: Address,
+// 	tokenId: BigInt,
+// 	account: Address
+// ): string[] {
+// 	let MatchTokenToCollection = new TypedMap<string, string[]>()
+// 	MatchTokenToCollection.set(account.toHexString(), [
+// 		collection.toHexString(),
+// 		tokenId.toString(),
+// 	])
+
+// 	let array = MatchTokenToCollection.get(account.toHexString())
+// 	if (array !== null) {
+// 		array.push(tokenId.toString())
+// 	} else {
+// 		array.push(collection.toHexString())
+// 		array.push(tokenId.toString())
+// 	}
+// 	return array as string[]
+// }

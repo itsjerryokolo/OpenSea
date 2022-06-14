@@ -1,21 +1,19 @@
-import { Address, BigInt } from '@graphprotocol/graph-ts'
+import { Address } from '@graphprotocol/graph-ts'
 import { Account } from '../../generated/schema'
-import { BIGINT_ONE, BIGINT_ZERO } from '../constant'
+import { BI_ZERO } from '../constant'
+// import {
+// 	createTypedMapCollection,
+// 	getTypedMapCollection,
+// } from './collectionHelper'
 
 export function getOrCreateAccount(address: Address): Account {
 	let id = address.toHexString()
 	let account = Account.load(id)
 	if (!account) {
 		account = new Account(id)
-		account.numberOfPunksOwned = BIGINT_ZERO
-		account.numberOfSales = BIGINT_ZERO
-		account.totalEarned = BIGINT_ZERO
-		account.numberOfTransfers = BIGINT_ZERO
-		account.numberOfPunksAssigned = BIGINT_ZERO
-		account.numberOfPurchases = BIGINT_ZERO
-		account.totalSpent = BIGINT_ZERO
-		account.averageAmountSpent = BIGINT_ZERO
-		account.accountUrl = url.concat(id)
+		account.numberOfSales = BI_ZERO
+		account.numberOfPurchases = BI_ZERO
+		//account.nftOwnedAndCollection = new Array<string>()
 
 		account.save()
 	}
@@ -23,18 +21,18 @@ export function getOrCreateAccount(address: Address): Account {
 	return account as Account
 }
 
-/**
- * @description This function:
- *   - update the sales of the seller
- *   - update the total earned by seller
- *   - update the purchases of buyer
- *   - update the spending of the buyer
- *   - calculate average amount spent
- * @param fromAccount This is the seller account
- * @param toAccount This is the buyer account
- * @param price This is the price of the punk
- * @returns `void`
- */
+// /**
+//  * @description This function:
+//  *   - update the sales of the seller
+//  *   - update the total earned by seller
+//  *   - update the purchases of buyer
+//  *   - update the spending of the buyer
+//  *   - calculate average amount spent
+//  * @param fromAccount This is the seller account
+//  * @param toAccount This is the buyer account
+//  * @param price This is the price of the punk
+//  * @returns `void`
+//  */
 
 // export function updateAccountAggregates(
 //   fromAccount: Account,
