@@ -1,221 +1,148 @@
-import { BigInt, BigDecimal} from "@graphprotocol/graph-ts"
 import {
-  OpenSea,
-  OrderApprovedPartOne,
-  OrderApprovedPartTwo,
-  OrderCancelled,
-  OrdersMatched,
-  OwnershipRenounced,
-  OwnershipTransferred
-} from "../generated/OpenSea/OpenSea"
-
+	Address,
+	crypto,
+	log,
+	ethereum,
+	ByteArray,
+	BigInt,
+} from '@graphprotocol/graph-ts'
 import {
-  Collection
-} from "../generated/templates/Collection/Collection"
+	OpenSea,
+	OrdersMatched,
+	OrderApprovedPartOne,
+	OrderApprovedPartTwo,
+} from '../generated/OpenSea/OpenSea'
+import { getOrCreateAccount } from './helper/accountHelper'
+import { getOrCreateAuction } from './helper/auctionHelper'
+import { getOrCreateCollection } from './helper/collectionHelper'
+import { getOrCreateFee } from './helper/feeHelper'
+import { getOrCreateNft } from './helper/nftHelper'
+import { getOrCreateSale } from './helper/saleHelper'
+import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
+import { BI_ONE } from './constant'
 
-
-import {
-  Account,
-  Contract,
-  Transaction,
-  MarketPlace,
-  FeeEvent,
-  NFT,
-  SaleEvent,
-  TransferEvent,
-  Auction
-  } from "../generated/schema"
-
-export function handleOrderApprovedPartOne(event: OrderApprovedPartOne): void {
-  let opensea = OpenSea.bind(event.address)
-  let contract = new Contract(opensea._address.toHexString())
-  let transaction = Transaction.load(event.transaction.hash.toHexString())
-  let account = Account.load(event.params.maker.toHexString())
-  let marketplace = MarketPlace.load(event.params.exchange.toHexString())
-  let feeEvent = FeeEvent.load(event.transaction.hash.toHexString())
-  let saleEvent = SaleEvent.load(event.transaction.hash.toHexString())
-  
-
-  if (transaction == null){
-    transaction = new Transaction(event.transaction.hash.toHexString())
-  }
-  if (account == null){
-    account = new Account(event.params.maker.toHexString())
-  }
-  if (marketplace == null){
-    marketplace = new MarketPlace(event.params.exchange.toHexString())
-  }
-  if (feeEvent == null){
-    feeEvent = new FeeEvent(event.transaction.hash.toHexString())
-  }
-  if (saleEvent == null){
-    saleEvent = new SaleEvent(event.transaction.hash.toHexString())
-  }
-
-  marketplace.exchangeAddress = event.params.exchange
-
-  saleEvent.marketplace = marketplace.id
-  saleEvent.transaction = transaction.id
-
-  //feeEvent.feeMethod = event.params.feeMethod(BigInt.fromI32(0))
-  feeEvent.feeRecipient = event.params.feeRecipient
-  feeEvent.takerProtocolFee = event.params.takerProtocolFee
-  feeEvent.makerProtocolFee = event.params.makerProtocolFee
-  feeEvent.makerRelayerFee = event.params.makerRelayerFee
-  feeEvent.takerProtocolFee = event.params.takerRelayerFee
-  feeEvent.transaction = transaction.id
-  feeEvent.account = account.id
-  feeEvent.contract = contract.id
-
-
-  transaction.hash = event.transaction.hash
-  transaction.block = event.block.number
-  transaction.date = event.block.timestamp
-  transaction.account = account.id
-  transaction.marketplace = marketplace.id
-  transaction.saleEvent = saleEvent.id
-  transaction.feeEvent = feeEvent.id
-
-
-  contract.address = opensea._address
-  contract.name = opensea._name
-  contract.version = opensea.version()
-  contract.codename = opensea.codename()
-
-
-  contract.save()
-  marketplace.save()
-  account.save()
-  feeEvent.save()
-  transaction.save()
-}
-
-
-
-export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {
-  let auction = Auction.load(event.params.hash.toHexString())
-  let transaction = Transaction.load(event.transaction.hash.toHexString())
-
-  if (transaction == null){
-    transaction = new Transaction(event.transaction.hash.toHexString())
-  }
-  if (auction == null){
-    auction = new Auction(event.params.hash.toHexString())
-  }
-
-
-  auction.listingTime = event.params.listingTime
-  auction.basePrice = event.params.basePrice
-  auction.expirationTime = event.params.expirationTime
-  auction.paymentToken = event.params.paymentToken
-  auction.staticExtraData = event.params.staticExtradata
-  auction.extra = event.params.extra
-  auction.hash = event.params.hash
-  auction.orderbook = event.params.orderbookInclusionDesired
-  auction.transaction = transaction.id
-
-
-  transaction.hash = event.transaction.hash
-  transaction.block = event.block.number
-  transaction.date = event.block.timestamp
-
-
-  auction.save()
-  transaction.save()
-
-
-
-}
-
-export function handleOrderCancelled(event: OrderCancelled): void {}
-
-
-
+//set of 3: REGULAR TRANSFER: https://etherscan.io/tx/0x9660bd19edec4f443068094d3ee9cf2c9b78fbc4a7888bb1a98d154a98041d0a#eventlog
 
 export function handleOrdersMatched(event: OrdersMatched): void {
-  let saleEvent = SaleEvent.load(event.transaction.hash.toHexString())
-  let nft = NFT.load(event.params.metadata.toHexString())
-  let transaction = Transaction.load(event.transaction.hash.toHexString())
-  let account = Account.load(event.params.taker.toHexString())
-  let collection = Collection.load(event.params.metadata)
+	//Transfer
+	// let transferFrom = event.receipt.logs[1].topics[2].toHexString()
+	// let transferTo = event.receipt.logs[1].topics[2].toHexString()
+	let receipt = event.receipt
+	if (receipt !== null) {
+		let logs = event.receipt!.logs
+		for (let i = 0; i < logs.length; i++) {
+			//OrderMatched
 
+			let curr = logs[i]
+			let topic = curr.topics[0]
 
+			// if (
+			// 	topic.toHexString() ==
+			// 	'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+			// )
+			if (topic) {
+				let contractAddress = ethereum.decode('address', topic)
+				let tokenID = ethereum.decode('address', curr.topics[3])
+				let from = ethereum.decode('address', curr.topics[1])
+				let to = ethereum.decode('address', curr.topics[2])
 
-  if (transaction == null){
-    transaction = new Transaction(event.transaction.hash.toHexString())
-  }
-  if (collection == null){
-    collection = new Collection(event.params.metadata.toHexString())
-  }
-  if (nft == null){
-    nft = new  NFT(event.params.metadata.toHexString())
-  }
-  if (saleEvent == null){
-    saleEvent = new SaleEvent(event.transaction.hash.toHexString())
-  }
-  if (account == null){
-    account = new Account(event.params.taker.toHexString())
-  }
-  
-  
+				if (tokenID && from && to && contractAddress) {
+					let buyHash = event.params.buyHash
+					let sellHash = event.params.sellHash
+					let price = event.params.price
+					let maker = event.params.maker
+					let taker = event.params.taker
 
-  saleEvent.sellHash = event.params.sellHash
-  saleEvent.buyHash = event.params.buyHash
-  saleEvent.maker = event.params.maker
-  saleEvent.taker = event.params.taker
-  saleEvent.account = account.id
-  saleEvent.price = event.params.price
-  saleEvent.nft = nft.id
-  saleEvent.transaction = transaction.id
+					// let paymentToken = getOrCreatePaymentToken(
+					// 	Address.fromHexString(ZERO_ADDRESS)
+					// )
+					let buyer = getOrCreateAccount(maker)
+					let seller = getOrCreateAccount(taker)
 
+					let collection = getOrCreateCollection(contractAddress.toString())
 
-  transaction.hash = event.transaction.hash
-  transaction.block = event.block.number
-  transaction.date = event.block.timestamp
-  transaction.nft = nft.id
-  transaction.saleEvent = saleEvent.id
+					let nft = getOrCreateNft(
+						BigInt.fromString(tokenID.toString()),
+						collection,
+						maker
+					)
+					let sale = getOrCreateSale(event)
+					log.debug('{}, {}, {}, {}', [
+						topic.toString(),
+						tokenID.toString(),
+						from.toAddress.toString(),
+						to.toString(),
+					])
 
+					collection.owner = buyer.id
+					collection.numberOfSales = collection.numberOfSales.plus(BI_ONE)
+					collection.totalSales = collection.totalSales.plus(price)
+					collection.tokenId = BigInt.fromString(tokenID.toString())
+					collection.nft = nft.id
+					collection.gasUsed = receipt.cumulativeGasUsed
 
+					// paymentToken.numberOfSales = paymentToken.numberOfSales.plus(BI_ONE)
+					// paymentToken.address = ZERO_ADDRESS
 
-  saleEvent.save()
-  transaction.save()
-  account.save()
-  collection.save()
-  nft.save()
+					nft.owner = buyer.id
+					nft.sale = sale.id
+					nft.tokenID = BigInt.fromString(tokenID.toString())
+					nft.collection = collection.id
+					nft.numberOfSales = nft.numberOfSales.plus(BI_ONE)
 
-  Collection.create(event.params.metadata)
+					seller.numberOfSales = seller.numberOfPurchases.plus(BI_ONE)
+					seller.totalEarned = seller.totalEarned.plus(price)
 
+					buyer.totalSpent = buyer.totalSpent.plus(price)
+					buyer.numberOfPurchases = buyer.numberOfPurchases.plus(BI_ONE)
+
+					sale.buyHash = buyHash
+					sale.sellHash = sellHash
+					// sale.paymentToken = paymentToken.id
+					sale.seller = seller.id
+					sale.buyer = buyer.id
+					sale.price = price
+					sale.collection = collection.id
+
+					sale.save()
+					buyer.save()
+					seller.save()
+					collection.save()
+					// paymentToken.save()
+					nft.save()
+				}
+			}
+		}
+	}
+}
+export function handleOrderApprovedPartOne(event: OrderApprovedPartOne): void {
+	let fee = getOrCreateFee(event)
+	let collection = getOrCreateCollection(
+		event.params.feeRecipient.toHexString()
+	)
+
+	fee.feeRecipient = collection.id
+	fee.takerProtocolFee = event.params.takerProtocolFee
+	fee.makerProtocolFee = event.params.makerProtocolFee
+	fee.makerRelayerFee = event.params.makerRelayerFee
+	fee.takerProtocolFee = event.params.takerRelayerFee
+
+	fee.save()
 }
 
-export function handleOwnershipRenounced(event: OwnershipRenounced): void {}
+export function handleOrderApprovedPartTwo(event: OrderApprovedPartTwo): void {
+	let auction = getOrCreateAuction(event.params.hash.toHexString(), event)
+	let paymentToken = getOrCreatePaymentToken(event.params.paymentToken)
 
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {
-  let transferevent = TransferEvent.load(event.params.previousOwner.toHexString())
-  let account = Account.load(event.params.newOwner.toHexString())
-  let transaction = Transaction.load(event.transaction.hash.toHexString())
+	auction.listingTime = event.params.listingTime
+	auction.basePrice = event.params.basePrice
+	auction.expirationTime = event.params.expirationTime
+	auction.paymentToken = paymentToken.id
+	auction.staticExtraData = event.params.staticExtradata
+	auction.extra = event.params.extra
+	auction.hash = event.params.hash
+	auction.orderbook = event.params.orderbookInclusionDesired
 
-  if (transferevent == null){
-    transferevent = new TransferEvent(event.params.previousOwner.toHexString())
-  }
-  if (account == null){
-    account = new  Account(event.params.newOwner.toHexString())
-  }
-  if (transaction == null){
-    transaction = new Transaction(event.transaction.hash.toHexString())
-  }
-
-  transferevent.sender = event.params.previousOwner
-  transferevent.receiver = event.params.newOwner
-  transferevent.account = account.id
-  transferevent.transaction = transaction.id
-
-  transferevent.save()
-  transaction.save()
-  account.save()
-
-
-
-
+	auction.save()
+	paymentToken.save()
 }
-
-

@@ -42,6 +42,7 @@ type Collection @entity {
   numberOfSales: BigInt!
   totalSales: BigInt!
   tokenId: BigInt!
+  gasUsed: BigInt!
 
   owner: Account!
 

@@ -8,9 +8,3 @@ export function getGlobalId(event: ethereum.Event): string {
 		.concat(event.logIndex.toString())
 	return globalId
 }
-
-export let PaymentTokens = new TypedMap<string, string>()
-PaymentTokens.set('0x0000000000000000000000000000000000000000', 'ETH')
-PaymentTokens.set('0x0000000000000000000000000000000000000001', 'WETH')
-PaymentTokens.set('0x0000000000000000000000000000000000000002', 'DAI')
-PaymentTokens.set('0x0000000000000000000000000000000000000003', 'USDC')

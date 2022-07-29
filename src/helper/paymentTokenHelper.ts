@@ -1,7 +1,6 @@
 import { Address } from '@graphprotocol/graph-ts'
 import { PaymentToken } from '../../generated/schema'
 import { BI_ONE, BI_ZERO } from '../constant'
-import { PaymentTokens } from '../utils'
 
 export function getOrCreatePaymentToken(tokenAddress: Address): PaymentToken {
 	let token = PaymentToken.load(tokenAddress.toHexString())
