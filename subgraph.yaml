@@ -21,6 +21,8 @@ dataSources:
       abis:
         - name: OpenSea
           file: ./abis/OpenSea.json
+        - name: ERC721
+          file: ./abis/ERC721.json
       eventHandlers:
         - event: OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
           handler: handleOrdersMatched
