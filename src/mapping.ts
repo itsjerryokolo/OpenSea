@@ -36,15 +36,11 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 			let curr = logs[i]
 			let topic = curr.topics[0]
 
-			// if (
-			// 	topic.toHexString() ==
-			// 	'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-			// )
 			if (topic) {
-				let contractAddress = ethereum.decode('address', topic)
-				let tokenID = ethereum.decode('address', curr.topics[3])
-				let from = ethereum.decode('address', curr.topics[1])
-				let to = ethereum.decode('address', curr.topics[2])
+				let contractAddress = event.address
+				let tokenID = ethereum.decode('(uint256)', curr.topics[3])
+				let from = ethereum.decode('(address)', curr.topics[1])
+				let to = ethereum.decode('(address)', curr.topics[2])
 
 				if (tokenID && from && to && contractAddress) {
 					let buyHash = event.params.buyHash
@@ -62,7 +58,7 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 					let collection = getOrCreateCollection(contractAddress.toString())
 
 					let nft = getOrCreateNft(
-						BigInt.fromString(tokenID.toString()),
+						BigInt.fromString(tokenID.toTuple()[0].toString()),
 						collection,
 						maker
 					)
