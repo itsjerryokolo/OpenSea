@@ -5,6 +5,7 @@ import {
 	ethereum,
 	ByteArray,
 	BigInt,
+	Bytes,
 } from '@graphprotocol/graph-ts'
 import {
 	OpenSea,
@@ -21,12 +22,19 @@ import { getOrCreateSale } from './helper/saleHelper'
 import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
 import { BI_ONE } from './constant'
 
+const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+const USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+
 //set of 3: REGULAR TRANSFER: https://etherscan.io/tx/0x9660bd19edec4f443068094d3ee9cf2c9b78fbc4a7888bb1a98d154a98041d0a#eventlog
 
 export function handleOrdersMatched(event: OrdersMatched): void {
 	//Transfer
 	// let transferFrom = event.receipt.logs[1].topics[2].toHexString()
 	// let transferTo = event.receipt.logs[1].topics[2].toHexString()
+
+
 	let receipt = event.receipt
 	if (receipt !== null) {
 		let logs = event.receipt!.logs
@@ -41,10 +49,19 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 			// 	'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 			// )
 			if (topic) {
-				let contractAddress = ethereum.decode('address', topic)
-				let tokenID = ethereum.decode('address', curr.topics[3])
+				let keccakOrderMatched = crypto.keccak256(ByteArray.fromUTF8("OrdersMatched(bytes32,bytes32,address,address,uint256,bytes32)")) 
+				// (crypto.keccak256(ByteArray.fromUTF8("Transfer(address,address,uint256)")).equals(topic_sig)
+				let keccakTransfer = crypto.keccak256(ByteArray.fromUTF8("Transfer(address,address,uint256)"))
+
+
+				if (topic[0] != Bytes.fromByteArray(keccakOrderMatched)) {
+					let contractAddress = ethereum.decode('address', topic[0])
+
+
+					
 				let from = ethereum.decode('address', curr.topics[1])
 				let to = ethereum.decode('address', curr.topics[2])
+				let tokenID = ethereum.decode('uint256', curr.topics[3])
 
 				if (tokenID && from && to && contractAddress) {
 					let buyHash = event.params.buyHash
@@ -62,7 +79,7 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 					let collection = getOrCreateCollection(contractAddress.toString())
 
 					let nft = getOrCreateNft(
-						BigInt.fromString(tokenID.toString()),
+						tokenID.toBigInt(),
 						collection,
 						maker
 					)
@@ -111,6 +128,9 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 					// paymentToken.save()
 					nft.save()
 				}
+				}
+
+				
 			}
 		}
 	}
