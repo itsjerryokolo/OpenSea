@@ -20,7 +20,7 @@ import { getOrCreateFee } from './helper/feeHelper'
 import { getOrCreateNft } from './helper/nftHelper'
 import { getOrCreateSale } from './helper/saleHelper'
 import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
-import { BI_ONE } from './constant'
+import { BI_ONE, Tokens } from './constant'
 
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
@@ -34,103 +34,87 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 	// let transferFrom = event.receipt.logs[1].topics[2].toHexString()
 	// let transferTo = event.receipt.logs[1].topics[2].toHexString()
 
+	let buyHash = event.params.buyHash
+	let sellHash = event.params.sellHash
+	let price = event.params.price
+	let maker = event.params.maker
+	let taker = event.params.taker
+	let contractAddress = Tokens.GALAKTIC_GANG
 	let receipt = event.receipt
+
 	if (receipt !== null) {
 		let logs = event.receipt!.logs
 		for (let i = 0; i < logs.length; i++) {
 			//OrderMatched
 
 			let curr = logs[i]
-			let topic = curr.topics[0]
+			let topic = ethereum.decode('(address)', curr.topics[0])!
 
-			if (topic) {
-				let contractAddress = event.address
-				let tokenID = ethereum.decode('(uint256)', curr.topics[3])
-				let from = ethereum.decode('(address)', curr.topics[1])
-				let to = ethereum.decode('(address)', curr.topics[2])
-				let keccakOrderMatched = crypto.keccak256(
-					ByteArray.fromUTF8(
-						'OrdersMatched(bytes32,bytes32,address,address,uint256,bytes32)'
-					)
-				)
-				// (crypto.keccak256(ByteArray.fromUTF8("Transfer(address,address,uint256)")).equals(topic_sig)
-				let keccakTransfer = crypto.keccak256(
-					ByteArray.fromUTF8('Transfer(address,address,uint256)')
-				)
+			if (
+				topic.toAddress().toHexString() ==
+				'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+			) {
+				let tokenID = ethereum.decode('(uint256)', curr.topics[3])!
+				let from = ethereum.decode('(address)', curr.topics[1])!
+				let to = ethereum.decode('(address)', curr.topics[2])!
 
-				if (topic[0] != Bytes.fromByteArray(keccakOrderMatched)) {
-					let contractAddress = ethereum.decode('address', topic[0])
+				if (
+					tokenID.toBigInt().toString() &&
+					from.toAddress().toHexString() &&
+					to.toAddress().toHexString()
+				) {
+					// let paymentToken = getOrCreatePaymentToken(
+					// 	Address.fromHexString(ZERO_ADDRESS)
+					// )
+					let buyer = getOrCreateAccount(maker)
+					let seller = getOrCreateAccount(taker)
 
-					let from = ethereum.decode('address', curr.topics[1])
-					let to = ethereum.decode('address', curr.topics[2])
-					let tokenID = ethereum.decode('uint256', curr.topics[3])
+					let collection = getOrCreateCollection(contractAddress.toString())
 
-					if (tokenID && from && to && contractAddress) {
-						let buyHash = event.params.buyHash
-						let sellHash = event.params.sellHash
-						let price = event.params.price
-						let maker = event.params.maker
-						let taker = event.params.taker
+					let nft = getOrCreateNft(tokenID.toBigInt(), collection, maker)
+					let sale = getOrCreateSale(event)
+					log.debug('{}, {}, {}', [
+						tokenID.toBigInt().toString(),
+						from.toAddress().toHexString(),
+						to.toAddress().toHexString(),
+					])
 
-						// let paymentToken = getOrCreatePaymentToken(
-						// 	Address.fromHexString(ZERO_ADDRESS)
-						// )
-						let buyer = getOrCreateAccount(maker)
-						let seller = getOrCreateAccount(taker)
+					collection.owner = buyer.id
+					collection.numberOfSales = collection.numberOfSales.plus(BI_ONE)
+					collection.totalSales = collection.totalSales.plus(price)
+					collection.tokenId = BigInt.fromString(tokenID.toBigInt().toString())
+					collection.nft = nft.id
+					collection.gasUsed = receipt.cumulativeGasUsed
 
-						let collection = getOrCreateCollection(contractAddress.toString())
+					// paymentToken.numberOfSales = paymentToken.numberOfSales.plus(BI_ONE)
+					// paymentToken.address = ZERO_ADDRESS
 
-						let nft = getOrCreateNft(
-							BigInt.fromString(tokenID.toTuple()[0].toString()),
-							tokenID.toBigInt(),
-							collection,
-							maker
-						)
-						let sale = getOrCreateSale(event)
-						log.debug('{}, {}, {}, {}', [
-							topic.toString(),
-							tokenID.toString(),
-							from.toAddress.toString(),
-							to.toString(),
-						])
+					nft.owner = buyer.id
+					nft.sale = sale.id
+					nft.tokenID = BigInt.fromString(tokenID.toBigInt().toString())
+					nft.collection = collection.id
+					nft.numberOfSales = nft.numberOfSales.plus(BI_ONE)
 
-						collection.owner = buyer.id
-						collection.numberOfSales = collection.numberOfSales.plus(BI_ONE)
-						collection.totalSales = collection.totalSales.plus(price)
-						collection.tokenId = BigInt.fromString(tokenID.toString())
-						collection.nft = nft.id
-						collection.gasUsed = receipt.cumulativeGasUsed
+					seller.numberOfSales = seller.numberOfPurchases.plus(BI_ONE)
+					seller.totalEarned = seller.totalEarned.plus(price)
 
-						// paymentToken.numberOfSales = paymentToken.numberOfSales.plus(BI_ONE)
-						// paymentToken.address = ZERO_ADDRESS
+					buyer.totalSpent = buyer.totalSpent.plus(price)
+					buyer.numberOfPurchases = buyer.numberOfPurchases.plus(BI_ONE)
 
-						nft.owner = buyer.id
-						nft.sale = sale.id
-						nft.tokenID = BigInt.fromString(tokenID.toString())
-						nft.collection = collection.id
-						nft.numberOfSales = nft.numberOfSales.plus(BI_ONE)
+					sale.buyHash = buyHash
+					sale.sellHash = sellHash
+					// sale.paymentToken = paymentToken.id
+					sale.seller = seller.id
+					sale.buyer = buyer.id
+					sale.price = price
+					sale.collection = collection.id
 
-						seller.numberOfSales = seller.numberOfPurchases.plus(BI_ONE)
-						seller.totalEarned = seller.totalEarned.plus(price)
-
-						buyer.totalSpent = buyer.totalSpent.plus(price)
-						buyer.numberOfPurchases = buyer.numberOfPurchases.plus(BI_ONE)
-
-						sale.buyHash = buyHash
-						sale.sellHash = sellHash
-						// sale.paymentToken = paymentToken.id
-						sale.seller = seller.id
-						sale.buyer = buyer.id
-						sale.price = price
-						sale.collection = collection.id
-
-						sale.save()
-						buyer.save()
-						seller.save()
-						collection.save()
-						// paymentToken.save()
-						nft.save()
-					}
+					sale.save()
+					buyer.save()
+					seller.save()
+					collection.save()
+					// paymentToken.save()
+					nft.save()
 				}
 			}
 		}
