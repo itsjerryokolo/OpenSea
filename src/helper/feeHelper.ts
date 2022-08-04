@@ -1,11 +1,11 @@
 import { Address, ethereum } from '@graphprotocol/graph-ts'
 import { Fee } from '../../generated/schema'
-import { getGlobalId } from '../utils'
+import GlobalConstants from '../utils'
 
 export function getOrCreateFee(event: ethereum.Event): Fee {
-	let fee = Fee.load(getGlobalId(event))
+	let fee = Fee.load(GlobalConstants.globalId(event))
 	if (!fee) {
-		fee = new Fee(getGlobalId(event))
+		fee = new Fee(GlobalConstants.globalId(event))
 		fee.timestamp = event.block.timestamp
 		fee.txHash = event.transaction.hash
 		fee.blockHash = event.block.hash

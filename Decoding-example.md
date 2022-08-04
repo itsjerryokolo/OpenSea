@@ -20,3 +20,15 @@ c4109843e0b7d514e4c093114b863f8e7d8d9a458c372cd51bfe526b588006c973566a07202b9216
 c4109843e0b7d514e4c093114b863f8e7d8d9a458c372cd51bfe526b588006c9 => OrdersMatched(bytes32,bytes32,address,address,uint256,bytes32)
 73566a07202b9216c733f4fbbf78d71cfa63700562607d87b5793859fb80ac96 => Maker
 c743e8e1df4e4905000000000000000000000000000000000000000000000000 => Taker
+
+
+
+					var _transferEvent = new TransferEvent(
+						receipt.logs[index].address, //Address
+						receipt.logs[index].logIndex, //logIndex
+						receipt.logs[index].transactionLogIndex, //transactionLogIndex
+						receipt.logs[index].logType, //logType
+						event.block, //block
+						event.transaction, //transaction
+						_EventParam //parameters
+					)
