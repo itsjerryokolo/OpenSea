@@ -46,7 +46,7 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 	if (receipt) {
 		for (let index = 0; index < receipt.logs.length; index++) {
 			const _topic0_identifier = Bytes.fromHexString(
-				'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+				'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' // This is identifier of the Transfer
 			)
 			const _topic0 = receipt.logs[index].topics[0]
 			const _address = receipt.logs[index].address
@@ -56,26 +56,26 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 				_address.toHexString() == '0xf4cd7e65348deb24e30dedee639c4936ae38b763'
 			) {
 				const _tokenID = receipt.logs[index].topics[3]
-				const tokenId = ethereum.decode('uin256', _tokenID)
+				const tokenId = ethereum.decode('uin256', _tokenID)!.toBigInt()
 
 				let buyer = getOrCreateAccount(maker)
 				let seller = getOrCreateAccount(taker)
 				let collection = getOrCreateCollection(
-					'0xf4cd7e65348deb24e30dedee639c4936ae38b763'
+					_address.toHexString()
 				)
-				let nft = getOrCreateNft(BigInt.fromI32(12), collection, maker)
+				let nft = getOrCreateNft(tokenId, collection, maker)
 				let sale = getOrCreateSale(event)
 
 				collection.owner = buyer.id
 				collection.numberOfSales = collection.numberOfSales.plus(BI_ONE)
 				collection.totalSales = collection.totalSales.plus(price)
-				collection.tokenId = tokenId!.toBigInt()
+				collection.tokenId = tokenId
 				collection.nft = nft.id
 				collection.gasUsed = receipt.cumulativeGasUsed
 
 				nft.owner = buyer.id
 				nft.sale = sale.id
-				nft.tokenID = tokenId!.toBigInt()
+				nft.tokenID = tokenId
 				nft.collection = collection.id
 				nft.numberOfSales = nft.numberOfSales.plus(BI_ONE)
 
