@@ -1,17 +1,16 @@
 import { Address } from '@graphprotocol/graph-ts'
 import { Account } from '../../generated/schema'
-import { BI_ZERO } from '../constant'
+import GlobalConstants from '../utils'
 
 export function getOrCreateAccount(address: Address): Account {
 	let id = address.toHexString()
 	let account = Account.load(id)
 	if (!account) {
 		account = new Account(id)
-		account.numberOfSales = BI_ZERO
-		account.numberOfPurchases = BI_ZERO
-
-		account.totalSpent = BI_ZERO
-		account.totalEarned = BI_ZERO
+		account.numberOfSales = GlobalConstants.BI_ZERO
+		account.numberOfPurchases = GlobalConstants.BI_ZERO
+		account.totalSpent = GlobalConstants.BI_ZERO
+		account.totalEarned = GlobalConstants.BI_ZERO
 
 		//account.nftOwnedAndCollection = new Array<string>()
 

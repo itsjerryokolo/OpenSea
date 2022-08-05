@@ -20,7 +20,6 @@ import { getOrCreateFee } from './helper/feeHelper'
 import { getOrCreateNft } from './helper/nftHelper'
 import { getOrCreateSale } from './helper/saleHelper'
 import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
-import { BI_ONE } from './constant'
 import GlobalConstants from './utils'
 
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
@@ -39,10 +38,6 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 
 	let receipt = event.receipt
 
-	if (!receipt) {
-		log.critical('Receipt is null', [GlobalConstants.AZUKI])
-	}
-
 	if (receipt) {
 		for (let index = 0; index < receipt.logs.length; index++) {
 			const _topic0_identifier = Bytes.fromHexString(
@@ -51,23 +46,20 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 			const _topic0 = receipt.logs[index].topics[0]
 			const _address = receipt.logs[index].address
 
-			if (
-				_topic0.equals(_topic0_identifier) &&
-				_address.toHexString() == '0xf4cd7e65348deb24e30dedee639c4936ae38b763'
-			) {
+			if (_topic0.equals(_topic0_identifier)) {
 				const _tokenID = receipt.logs[index].topics[3]
 				const tokenId = ethereum.decode('uin256', _tokenID)!.toBigInt()
 
 				let buyer = getOrCreateAccount(maker)
 				let seller = getOrCreateAccount(taker)
-				let collection = getOrCreateCollection(
-					_address.toHexString()
-				)
+				let collection = getOrCreateCollection(_address.toHexString())
 				let nft = getOrCreateNft(tokenId, collection, maker)
 				let sale = getOrCreateSale(event)
 
 				collection.owner = buyer.id
-				collection.numberOfSales = collection.numberOfSales.plus(BI_ONE)
+				collection.numberOfSales = collection.numberOfSales.plus(
+					GlobalConstants.BI_ONE
+				)
 				collection.totalSales = collection.totalSales.plus(price)
 				collection.tokenId = tokenId
 				collection.nft = nft.id
@@ -77,17 +69,20 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 				nft.sale = sale.id
 				nft.tokenID = tokenId
 				nft.collection = collection.id
-				nft.numberOfSales = nft.numberOfSales.plus(BI_ONE)
+				nft.numberOfSales = nft.numberOfSales.plus(GlobalConstants.BI_ONE)
 
-				seller.numberOfSales = seller.numberOfPurchases.plus(BI_ONE)
+				seller.numberOfSales = seller.numberOfPurchases.plus(
+					GlobalConstants.BI_ONE
+				)
 				seller.totalEarned = seller.totalEarned.plus(price)
 
 				buyer.totalSpent = buyer.totalSpent.plus(price)
-				buyer.numberOfPurchases = buyer.numberOfPurchases.plus(BI_ONE)
+				buyer.numberOfPurchases = buyer.numberOfPurchases.plus(
+					GlobalConstants.BI_ONE
+				)
 
 				sale.buyHash = buyHash
 				sale.sellHash = sellHash
-				// sale.paymentToken = paymentToken.id
 				sale.seller = seller.id
 				sale.buyer = buyer.id
 				sale.price = price

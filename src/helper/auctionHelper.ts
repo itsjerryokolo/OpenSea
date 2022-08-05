@@ -1,4 +1,4 @@
-import { Address, ethereum } from '@graphprotocol/graph-ts'
+import { ethereum } from '@graphprotocol/graph-ts'
 import { Auction } from '../../generated/schema'
 
 export function getOrCreateAuction(
