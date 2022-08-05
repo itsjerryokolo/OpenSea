@@ -12,6 +12,7 @@ export function getOrCreateCollection(id: string): Collection {
 		collection = new Collection(id)
 		collection.totalSupply = BI_ZERO
 		collection.totalSales = BI_ZERO
+		collection.numberOfSales = BI_ZERO
 
 		/**
 		 * @Todo
