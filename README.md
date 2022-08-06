@@ -1,2 +1,2 @@
 # OpenSea
-Subgraph for the OpenSea Marketplace
+OpenSea is the world's first and largest NFT marketplace
