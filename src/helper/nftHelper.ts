@@ -1,17 +1,32 @@
 import { Address, BigInt } from '@graphprotocol/graph-ts'
-import { Collection, Nft } from '../../generated/schema'
-import { BI_ZERO } from '../constant'
+import { Account, Collection, Nft, Sale } from '../../generated/schema'
+import GlobalConstants from '../utils'
 
 export function getOrCreateNft(
 	tokenId: BigInt,
 	collection: Collection,
 	owner: Address
 ): Nft {
-	let nft = new Nft(collection.id.concat('-').concat(tokenId.toString()))
-	nft.tokenID = tokenId
-	nft.owner = owner.toHexString()
-	nft.numberOfSales = BI_ZERO
-	//nft.numberOfAuctions = BI_ZERO
+	let nft = Nft.load(collection.id.concat('-').concat(tokenId.toString()))
+	if (!nft) {
+		nft = new Nft(collection.id.concat('-').concat(tokenId.toString()))
+		nft.tokenID = tokenId
+		nft.owner = owner.toHexString()
+		nft.numberOfSales = GlobalConstants.BI_ZERO
+	}
+	return nft
+}
 
-	return nft as Nft
+export function updateNftMetrics(
+	buyer: Account,
+	sale: Sale,
+	tokenId: BigInt,
+	collection: Collection,
+	nft: Nft
+): void {
+	nft.owner = buyer.id
+	nft.sale = sale.id
+	nft.tokenID = tokenId
+	nft.collection = collection.id
+	nft.numberOfSales = nft.numberOfSales.plus(GlobalConstants.BI_ONE)
 }

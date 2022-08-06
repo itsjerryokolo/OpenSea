@@ -1,4 +1,4 @@
-import { Address } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal } from '@graphprotocol/graph-ts'
 import { Account } from '../../generated/schema'
 import GlobalConstants from '../utils'
 
@@ -9,8 +9,8 @@ export function getOrCreateAccount(address: Address): Account {
 		account = new Account(id)
 		account.numberOfSales = GlobalConstants.BI_ZERO
 		account.numberOfPurchases = GlobalConstants.BI_ZERO
-		account.totalSpent = GlobalConstants.BI_ZERO
-		account.totalEarned = GlobalConstants.BI_ZERO
+		account.totalSpent = GlobalConstants.BD_ZERO
+		account.totalEarned = GlobalConstants.BD_ZERO
 
 		//account.nftOwnedAndCollection = new Array<string>()
 
@@ -20,50 +20,15 @@ export function getOrCreateAccount(address: Address): Account {
 	return account as Account
 }
 
-// /**
-//  * @description This function:
-//  *   - update the sales of the seller
-//  *   - update the total earned by seller
-//  *   - update the purchases of buyer
-//  *   - update the spending of the buyer
-//  *   - calculate average amount spent
-//  * @param fromAccount This is the seller account
-//  * @param toAccount This is the buyer account
-//  * @param price This is the price of the punk
-//  * @returns `void`
-//  */
+export function updateSellerAggregates(
+	seller: Account,
+	price: BigDecimal
+): void {
+	seller.numberOfSales = seller.numberOfPurchases.plus(GlobalConstants.BI_ONE)
+	seller.totalEarned = seller.totalEarned.plus(price)
+}
 
-// export function updateAccountAggregates(
-//   fromAccount: Account,
-//   toAccount: Account,
-//   price: BigInt
-// ): void {
-//   //Update fromAccount aggregates
-//   fromAccount.numberOfSales = fromAccount.numberOfSales.plus(BIGINT_ONE);
-//   fromAccount.totalEarned = fromAccount.totalEarned.plus(price);
-
-//   //Update toAccount aggregates
-//   toAccount.totalSpent = toAccount.totalSpent.plus(price);
-//   toAccount.numberOfPurchases = toAccount.numberOfPurchases.plus(BIGINT_ONE);
-
-//   //We only calculate average amount spent if there are more than 0 purchases so we don't divide by 0
-//   if (toAccount.numberOfPurchases != BIGINT_ZERO) {
-//     toAccount.averageAmountSpent = calculateAverage(
-//       toAccount.totalSpent,
-//       toAccount.numberOfPurchases
-//     );
-//   }
-// }
-
-// export function updateAccountHoldings(
-//   toAccount: Account,
-//   fromAccount: Account
-// ): void {
-//   //Update toAccount holdings
-//   toAccount.numberOfPunksOwned = toAccount.numberOfPunksOwned.plus(BIGINT_ONE);
-
-//   //Update fromAccount holdings
-//   fromAccount.numberOfPunksOwned = fromAccount.numberOfPunksOwned.minus(
-//     BIGINT_ONE
-//   );
-// }
+export function updateBuyerAggregates(buyer: Account, price: BigDecimal): void {
+	buyer.totalSpent = buyer.totalSpent.plus(price)
+	buyer.numberOfPurchases = buyer.numberOfPurchases.plus(GlobalConstants.BI_ONE)
+}

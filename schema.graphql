@@ -25,10 +25,15 @@ type Account @entity {
   id: ID!
   numberOfSales: BigInt!
   numberOfPurchases: BigInt!
-  totalSpent: BigInt!
-  totalEarned: BigInt!
+  totalSpent: BigDecimal!
+  totalEarned: BigDecimal!
   #nftOwnedAndCollection: [String!]!
   sales: [Sale!]! @derivedFrom(field: "buyer")
+}
+type Contract @entity {
+  id: ID!
+  version: String
+  codename: String
 }
 
 type Collection @entity {
@@ -36,13 +41,8 @@ type Collection @entity {
   nft: Nft
 
   totalSupply: BigInt
-  contractURI: String
-  version: String
-  codename: String
   numberOfSales: BigInt!
-  totalSales: BigInt!
-  tokenId: BigInt!
-  gasUsed: BigInt!
+  totalSales: BigDecimal!
 
   owner: Account!
 
@@ -73,7 +73,7 @@ type Sale implements Event @entity {
   buyHash: Bytes!
   buyer: Account!
   seller: Account!
-  price: BigInt!
+  price: BigDecimal!
   paymentToken: PaymentToken
   collection: Collection
 

@@ -1,4 +1,4 @@
-import { BigInt, ethereum } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OpenSea } from '../../generated/OpenSea/OpenSea'
 import { ERC721 } from '../../generated/OpenSea/ERC721'
 import { Account, Collection, Nft } from '../../generated/schema'
@@ -10,7 +10,7 @@ export function getOrCreateCollection(id: string): Collection {
 	if (!collection) {
 		collection = new Collection(id)
 		collection.totalSupply = GlobalConstants.BI_ZERO
-		collection.totalSales = GlobalConstants.BI_ZERO
+		collection.totalSales = GlobalConstants.BD_ZERO
 		collection.numberOfSales = GlobalConstants.BI_ZERO
 
 		// let collectionCall = ERC721.bind(Address.fromString(id))
@@ -20,19 +20,16 @@ export function getOrCreateCollection(id: string): Collection {
 	return collection
 }
 
-export function updateCollection(
+export function updateCollectionAggregates(
 	collection: Collection,
 	buyer: Account,
-	price: BigInt,
-	nft: Nft,
-	receipt: ethereum.TransactionReceipt
+	price: BigDecimal,
+	nft: Nft
 ): void {
 	collection.owner = buyer.id
 	collection.numberOfSales = collection.numberOfSales.plus(
 		GlobalConstants.BI_ONE
 	)
 	collection.totalSales = collection.totalSales.plus(price)
-	collection.tokenId = BigInt.fromString(nft.id)
 	collection.nft = nft.id
-	collection.gasUsed = receipt.cumulativeGasUsed
 }

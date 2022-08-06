@@ -1,5 +1,5 @@
-import { ethereum } from '@graphprotocol/graph-ts'
-import { Sale } from '../../generated/schema'
+import { BigDecimal, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Account, Collection, Sale } from '../../generated/schema'
 import GlobalConstants from '../utils'
 
 export function getOrCreateSale(event: ethereum.Event): Sale {
@@ -14,4 +14,21 @@ export function getOrCreateSale(event: ethereum.Event): Sale {
 		sale.eventType = 'SALE'
 	}
 	return sale as Sale
+}
+
+export function updateSale(
+	sale: Sale,
+	buyHash: Bytes,
+	sellHash: Bytes,
+	buyer: Account,
+	seller: Account,
+	price: BigDecimal,
+	collection: Collection
+): void {
+	sale.buyHash = buyHash
+	sale.sellHash = sellHash
+	sale.seller = seller.id
+	sale.buyer = buyer.id
+	sale.price = price
+	sale.collection = collection.id
 }
