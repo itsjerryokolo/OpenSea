@@ -129,9 +129,10 @@ type Auction implements Event @entity {
 type PaymentToken @entity {
   id: ID! #Payment token e.g USDC, ETH, DAI
   symbol: String
+  name: String
   address: String!
   decimals: BigInt
-  numberOfSales: BigInt!
-  totalSalesByToken: BigDecimal!
+  numberOfSales: BigInt
+  totalSalesByToken: BigDecimal
   sales: [Sale!]! @derivedFrom(field: "paymentToken")
 }

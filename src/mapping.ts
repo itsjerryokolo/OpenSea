@@ -18,10 +18,7 @@ import {
 import { getOrCreateFee } from './helper/feeHelper'
 import { getOrCreateNft, updateNftMetrics } from './helper/nftHelper'
 import { getOrCreateSale, updateSale } from './helper/saleHelper'
-import {
-	getOrCreatePaymentToken,
-	updatePaymentTokenAggregates,
-} from './helper/paymentTokenHelper'
+import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
 import { getOrCreateContract } from './helper/contractHelper'
 import GlobalConstants from './utils'
 
@@ -53,7 +50,6 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 				) {
 					const _tokenID = eventLogs[index].topics[3]
 					const tokenId = ethereum.decode('uin256', _tokenID)!.toBigInt()
-					const _paymentTokenAddress = eventLogs[index].topics[2]
 
 					let buyer = getOrCreateAccount(maker)
 					let seller = getOrCreateAccount(taker)
@@ -61,14 +57,12 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 					let nft = getOrCreateNft(tokenId, collection, maker)
 					let sale = getOrCreateSale(event)
 					let contract = getOrCreateContract(event)
-					let paymentToken = getOrCreatePaymentToken(_paymentTokenAddress)
 
 					updateCollectionAggregates(collection, buyer, price, nft)
 					updateNftMetrics(buyer, sale, tokenId, collection, price, nft)
 					updateSellerAggregates(seller, price)
 					updateBuyerAggregates(buyer, price)
 					updateSale(sale, buyHash, sellHash, buyer, seller, price, collection)
-					updatePaymentTokenAggregates(paymentToken, price)
 
 					buyer.save()
 					seller.save()
