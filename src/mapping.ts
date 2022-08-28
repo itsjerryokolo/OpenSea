@@ -16,10 +16,12 @@ import {
 	updateCollectionAggregates,
 } from './helper/collectionHelper'
 import { getOrCreateFee } from './helper/feeHelper'
+
 import { getOrCreateNft, updateNftMetrics } from './helper/nftHelper'
 import { getOrCreateSale, updateSale } from './helper/saleHelper'
 import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
 import GlobalConstants from './utils'
+import { getOrCreateContract } from './helper/contractHelper'
 
 //set of 3: REGULAR TRANSFER: https://etherscan.io/tx/0x9660bd19edec4f443068094d3ee9cf2c9b78fbc4a7888bb1a98d154a98041d0a#eventlog
 
