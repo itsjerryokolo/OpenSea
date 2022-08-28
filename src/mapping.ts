@@ -19,6 +19,7 @@ import { getOrCreateFee } from './helper/feeHelper'
 import { getOrCreateNft, updateNftMetrics } from './helper/nftHelper'
 import { getOrCreateSale, updateSale } from './helper/saleHelper'
 import { getOrCreatePaymentToken } from './helper/paymentTokenHelper'
+import { getOrCreateContract } from './helper/contractHelper'
 import GlobalConstants from './utils'
 
 //set of 3: REGULAR TRANSFER: https://etherscan.io/tx/0x9660bd19edec4f443068094d3ee9cf2c9b78fbc4a7888bb1a98d154a98041d0a#eventlog
@@ -29,43 +30,51 @@ export function handleOrdersMatched(event: OrdersMatched): void {
 	let price = GlobalConstants.convertPriceToBigDecimal(event.params.price)
 	let maker = event.params.maker
 	let taker = event.params.taker
-
 	let receipt = event.receipt
 
 	if (receipt) {
-		for (let index = 0; index < receipt.logs.length; index++) {
-			const _topic0 = receipt.logs[index].topics[0]
-			const _address = receipt.logs[index].address
-			if (
-				_topic0.equals(GlobalConstants.TRANSFER_SIG) &&
-				_address.toHexString() == GlobalConstants.GALAKTIC_GANG
-			) {
-				const _tokenID = receipt.logs[index].topics[3]
-				const tokenId = ethereum.decode('uin256', _tokenID)!.toBigInt()
+		const eventLogs = receipt.logs
+		if (eventLogs.length > 1) {
+			log.warning('Log length {}', [receipt.logs.length.toString()])
 
-				let buyer = getOrCreateAccount(maker)
-				let seller = getOrCreateAccount(taker)
-				let collection = getOrCreateCollection(_address.toHexString())
-				let nft = getOrCreateNft(tokenId, collection, maker)
-				let sale = getOrCreateSale(event)
-				//let openSeaContract = getOrCreateContract()
+			for (let index = 0; index < eventLogs.length; index++) {
+				log.warning('Topics {}', [receipt.logs[index].topics.length.toString()])
 
-				updateCollectionAggregates(collection, buyer, price, nft)
-				updateNftMetrics(buyer, sale, tokenId, collection, nft)
-				updateSellerAggregates(seller, price)
-				updateBuyerAggregates(buyer, price)
-				updateSale(sale, buyHash, sellHash, buyer, seller, price, collection)
+				const _topic0 = receipt.logs[index].topics[0]
+				const _topicsLength = eventLogs[index].topics.length
+				const _address = receipt.logs[index].address
 
-				buyer.save()
-				seller.save()
-				collection.save()
-				nft.save()
-				sale.save()
+				if (
+					_topicsLength == 4 &&
+					_topic0.equals(GlobalConstants.TRANSFER_SIG)
+				) {
+					const _tokenID = eventLogs[index].topics[3]
+					const tokenId = ethereum.decode('uin256', _tokenID)!.toBigInt()
+
+					let buyer = getOrCreateAccount(maker)
+					let seller = getOrCreateAccount(taker)
+					let collection = getOrCreateCollection(_address.toHexString())
+					let nft = getOrCreateNft(tokenId, collection, maker)
+					let sale = getOrCreateSale(event)
+					let contract = getOrCreateContract(event)
+
+					updateCollectionAggregates(collection, buyer, price, nft)
+					updateNftMetrics(buyer, sale, tokenId, collection, price, nft)
+					updateSellerAggregates(seller, price)
+					updateBuyerAggregates(buyer, price)
+					updateSale(sale, buyHash, sellHash, buyer, seller, price, collection)
+
+					buyer.save()
+					seller.save()
+					collection.save()
+					nft.save()
+					contract.save()
+					sale.save()
+				}
 			}
 		}
 	}
 }
-//}
 
 export function handleOrderApprovedPartOne(event: OrderApprovedPartOne): void {
 	let fee = getOrCreateFee(event)

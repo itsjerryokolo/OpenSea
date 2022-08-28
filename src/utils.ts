@@ -23,16 +23,8 @@ export default class GlobalConstants {
 		return '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 	}
 
-	static get COSMIC_LAB(): string {
-		return '0x96316355c44Be69414756D6706c61E61aECbD5f3'
-	}
-
-	static get AZUKI(): string {
-		return '0x2eb6be120eF111553F768FcD509B6368e82D1661'
-	}
-
-	static get GALAKTIC_GANG(): string {
-		return '0xf4cd7e65348deb24e30dedee639c4936ae38b763'
+	static get OPENSEA_ADDRESS(): string {
+		return '0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b'
 	}
 
 	static get BI_ZERO(): BigInt {
