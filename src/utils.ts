@@ -19,6 +19,19 @@ export default class GlobalConstants {
 		return '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 	}
 
+	static symbols(address: string): string {
+		if (address == GlobalConstants.WETH_ADDRESS) {
+			return 'ETH'
+		} else if (address == GlobalConstants.USDT_ADDRESS) {
+			return 'USDT'
+		} else if (address == GlobalConstants.ZERO_USDC) {
+			return 'USDC'
+		} else if (address == GlobalConstants.DAI_ADDRESS) {
+			return 'DAI'
+		}
+		return address
+	}
+
 	static get DAI_ADDRESS(): string {
 		return '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 	}
@@ -28,7 +41,7 @@ export default class GlobalConstants {
 	}
 
 	static get BI_ZERO(): BigInt {
-		return BigInt.fromI32(0)
+		return BigInt.zero()
 	}
 
 	static get BI_ONE(): BigInt {
@@ -36,7 +49,7 @@ export default class GlobalConstants {
 	}
 
 	static get BD_ZERO(): BigDecimal {
-		return new BigDecimal(BigInt.fromI32(0))
+		return new BigDecimal(BigInt.zero())
 	}
 
 	static globalId(event: ethereum.Event): string {
