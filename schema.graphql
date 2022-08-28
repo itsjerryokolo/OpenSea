@@ -27,15 +27,13 @@ type Account @entity {
   numberOfPurchases: BigInt!
   totalSpent: BigDecimal!
   totalEarned: BigDecimal!
-  nftOwnedAndCollection: [Nft!]! @derivedFrom(field: "owner")
-  sales: [Sale!]! @derivedFrom(field: "seller")
-  purchases: [Sale!]! @derivedFrom(field: "buyer")
+  #nftOwnedAndCollection: [String!]!
+  sales: [Sale!]! @derivedFrom(field: "buyer")
 }
 type Contract @entity {
   id: ID!
   version: String
   codename: String
-  name: String
 }
 
 type Collection @entity {
@@ -56,10 +54,11 @@ type Collection @entity {
 type Nft @entity {
   id: ID! #Collection + Token ID
   collection: Collection
+  symbol: String
   sale: Sale
 
   numberOfSales: BigInt!
-  totalSales: BigDecimal!
+  totalSales: BigInt
 
   tokenID: BigInt
   owner: Account!
@@ -132,7 +131,6 @@ type PaymentToken @entity {
   name: String
   address: String!
   decimals: BigInt
-  numberOfSales: BigInt
-  totalSalesByToken: BigDecimal
+  numberOfSales: BigInt!
   sales: [Sale!]! @derivedFrom(field: "paymentToken")
 }
